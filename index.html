@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>S Y S T E M _ F A I L U R E</title>
+    <style>
+        :root {
+            --primary: #00ff41; 
+            --primary-glow: rgba(0, 255, 65, 0.75);
+            --bg: #050505;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--primary);
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: crosshair;
+            text-shadow: 0 0 5px var(--primary-glow), 0 0 10px var(--primary-glow);
+        }
+
+        /* Scanline and CRT flickering effect */
+        #glitch-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 100;
+            animation: flicker 0.1s infinite;
+        }
+
+        #scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 101;
+            background: linear-gradient(0deg, rgba(0, 255, 65, 0) 0%, rgba(0, 255, 65, 0.15) 50%, rgba(0, 255, 65, 0) 100%);
+            opacity: 0.1;
+            position: absolute;
+            bottom: 100%;
+            animation: scanline 6s linear infinite;
+        }
+
+        #terminal {
+            width: 90%;
+            max-width: 600px;
+            font-size: 16px;
+            line-height: 1.5;
+            position: relative;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        #image-container {
+            display: none;
+            text-align: center;
+            animation: system-shake 0.2s infinite;
+            width: 100%;
+        }
+
+        img {
+            width: 85%; /* Responsive width */
+            max-width: 600px;
+            height: auto; /* Maintain aspect ratio */
+            filter: grayscale(1) contrast(150%) brightness(80%) sepia(100%) hue-rotate(70deg);
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        /* --- RESPONSIVE ADJUSTMENTS --- */
+        @media (max-width: 600px) {
+            #terminal {
+                font-size: 13px; /* Slightly smaller text for small screens */
+                width: 95%;
+            }
+            
+            .header-text {
+                font-size: 18px !important;
+            }
+
+            img {
+                width: 95%;
+                border-width: 1px;
+            }
+
+            #scanline {
+                animation-duration: 3s; /* Speed up scanlines for mobile */
+            }
+        }
+
+        /* Keyframes preserved from your design */
+        @keyframes flicker {
+            0% { opacity: 0.9; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100px; }
+        }
+
+        @keyframes system-shake {
+            0% { transform: translate(0,0); }
+            25% { transform: translate(-1px, -1px); }
+            75% { transform: translate(1px, 1px); }
+            100% { transform: translate(0,0); }
+        }
+
+        .hidden-clue {
+            color: #000;
+            user-select: all;
+            font-size: 10px;
+            margin-top: 30px;
+            word-break: break-all; /* Prevents overflow on mobile */
+        }
+        .hidden-clue::selection { background: var(--primary); color: #000; }
+    </style>
+</head>
+<body>
+
+<div id="glitch-overlay"></div>
+<div id="scanline"></div>
+
+<div id="terminal">
+    <p class="header-text" style="text-align: center; font-size: 24px;">[ SYSTEM FAILURE ]</p>
+    <hr style="border-color: var(--primary); box-shadow: 0 0 10px var(--primary);">
+    <div id="text-hook"></div>
+</div>
+
+<div id="image-container">
+    <img src="2026-01-05_FOUND.jpeg" id="asset" onerror="this.src='https://via.placeholder.com/600x400/000?text=DATA+CORRUPTED'">
+    <div style="margin-top: 20px; font-size: 18px; letter-spacing: 5px;">
+        05.01.2026
+    </div>
+    <div class="hidden-clue">PATH: /root/vault/jan05/input.exe --seed=8821</div>
+</div>
+
+<script>
+    const term = document.getElementById('text-hook');
+    const termContainer = document.getElementById('terminal');
+    const imgCont = document.getElementById('image-container');
+    
+    const lines = [
+        "CRITICAL ERROR: KERNEL_PANIC",
+        "[ FAIL ] Overriding security protocols...",
+        "[ FAIL ] Buffer overflow detected.",
+        "[ WARN ] Unauthorized user access (ID: 8821)",
+        "[ INFO ] Forcing visual reconstruct...",
+        "9%.. 31%.. 58%.. 88%.. 99%..",
+        "ACCESS GRANTED. DATA UNSTABLE."
+    ];
+
+    let lineIdx = 0;
+    let started = false;
+
+    function bootSequence() {
+        if (started) return;
+        started = true;
+        
+        function typeLine() {
+            if (lineIdx < lines.length) {
+                const p = document.createElement('p');
+                p.style.margin = "5px 0";
+                p.textContent = "> " + lines[lineIdx];
+                
+                if(lines[lineIdx].includes("FAIL")) p.style.color = "#ff3e3e";
+                
+                term.appendChild(p);
+                lineIdx++;
+                setTimeout(typeLine, Math.random() * 600 + 100);
+            } else {
+                setTimeout(() => {
+                    termContainer.style.display = 'none';
+                    imgCont.style.display = 'block';
+                }, 1000);
+            }
+        }
+        typeLine();
+    }
+
+    // Works for Desktop Click and Mobile Tap
+    window.addEventListener('mousedown', bootSequence);
+    window.addEventListener('touchstart', bootSequence);
+</script>
+
+</body>
+</html>
